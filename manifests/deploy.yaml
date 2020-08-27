@@ -1,0 +1,60 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: spinnaker-dotnet-hw
+  namespace: default
+data:
+  NEW_FEATURE: "true"
+
+---
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: spinnaker-dotnet-hw
+  namespace: default
+  labels:
+    source: demo
+    stack: frontend
+    app: dotnethw
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      source: demo
+      app: dotnethw
+  template:
+    metadata:
+      labels:
+        source: demo
+        app: dotnethw
+    spec:
+      containers:
+      - name: primary
+        image: index.docker.io/madhavanscrum/dotnet
+        ports:
+        - containerPort: 8080
+        envFrom:
+        - configMapRef:
+            name: spinnaker-dotnet-hw
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 25%
+      maxSurge: 25%            
+
+---
+
+kind: Service
+apiVersion: v1
+metadata:
+  name: spinnaker-dotnet-hw
+  namespace: default
+spec:
+  selector:
+    source: demo
+    app: dotnethw
+  ports:
+  - protocol: TCP
+    port: 8080
+    targetPort: 8080
